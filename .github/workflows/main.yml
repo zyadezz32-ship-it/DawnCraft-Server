@@ -38,7 +38,7 @@ jobs:
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt update && sudo apt install ngrok
-          # التوكن بتاعك
+          # التوكن بتاعك من الصورة
           ngrok config add-authtoken 304KNZ5sEAuYMvZJC8etJUv5vM6_3nKWdfGTHQYzwGY1QH93B
 
       - name: Accept EULA and Set Cracked
@@ -53,18 +53,18 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting ngrok tunnel..."
-          # تشغيل النفق وتوجيهه لملف log عشان ميعطلش السيرفر
-          ngrok tcp 25565 --log=stdout > ngrok.log & 
+          # تشغيل النفق مع توجيه الـ logs لتجنب تداخل البيانات
+          ngrok tcp 25565 --log=stdout > ngrok_status.log & 
           
           echo "Waiting for ngrok to generate IP..."
-          sleep 15
+          sleep 30
           
           echo "--------------------------------------------------"
           echo "YOUR SERVER IP IS:"
-          # السطر ده هيسحب الـ IP ويطبعهولك هنا في اللوجز مباشرة
+          # جلب الـ IP وطباعته بوضوح
           curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url' | sed 's/tcp:\/\///'
           echo "--------------------------------------------------"
           
           echo "Starting Minecraft Server (DawnCraft)..."
-          # تشغيل السيرفر مع استهلاك الرامات المتاحة في GitHub (حوالي 7 جيجا)
+          # استخدام الرامات القصوى المتاحة (7 جيجا)
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
