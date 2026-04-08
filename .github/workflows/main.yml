@@ -1,4 +1,4 @@
-name: DawnCraft Server (Easy Link)
+name: DawnCraft Server (Easy Link - Tailscale)
 
 on:
   workflow_dispatch:
@@ -16,28 +16,29 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Optimize System (Swap Space)
+        run: |
+          sudo swapoff -a
+          sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y wget curl unzip screen jq gnupg2
+          curl -fsSL https://tailscale.com/install.sh | sh
 
-      - name: Setup Playit.gg
+      - name: Start Tailscale & Funnel
+        env:
+          TS_AUTHKEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
         run: |
-          curl -SsL https://playit-cloud.github.io/ppa/key.gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/playit.gpg >/dev/null
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./ " | sudo tee /etc/apt/sources.list.d/playit-cloud.list
-          sudo apt update
-          sudo apt install playit -y
-
-      - name: Get Playit Claim Code
-        run: |
-          echo "------------------------------------------------"
-          echo "!!! LOOK HERE FOR YOUR CLAIM CODE !!!"
-          echo "------------------------------------------------"
-          # This will start playit, show the claim code, and then we'll stop it to continue setup
-          timeout 20s playit setup || true
-          echo "------------------------------------------------"
-          echo "Copy the code above and paste it into playit.gg"
-          echo "------------------------------------------------"
+          # تسجيل الدخول وتفعيل السيرفر باسم مميز
+          sudo tailscale up --authkey "$TS_AUTHKEY" --hostname="dawncraft-server"
+          
+          # تفعيل الـ Funnel لفتح البورت للعامة (بورت 25565)
+          sudo tailscale funnel 25565 &
 
       - name: Download and Install Forge & DawnCraft
         run: |
@@ -57,8 +58,11 @@ jobs:
 
       - name: Run Server
         run: |
-          echo "Starting Playit.gg in background..."
-          playit run & 
-          sleep 10
+          echo "------------------------------------------------"
+          echo "LOOK AT YOUR TAILSCALE DASHBOARD FOR THE LINK"
+          echo "It will be something like: dawncraft-server.yourname.ts.net"
+          echo "------------------------------------------------"
+          
           echo "Starting Minecraft Server..."
-          java -Xmx7G -Xms7G -Djava.awt.headless=true -XX:+UseG1GC @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
+          # استخدام Headless Mode وتصحيح الذاكرة لضمان الاستقرار
+          java -Xmx7G -Xms7G -Djava.awt.headless=true -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
