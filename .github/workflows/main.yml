@@ -16,8 +16,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install dependencies
+      - name: Clean and Install dependencies
         run: |
+          # مسح أي مستودعات قديمة عاملة مشاكل
+          sudo rm -f /etc/apt/sources.list.d/playit.list
           sudo apt-get update
           sudo apt-get install -y wget curl unzip screen
 
@@ -29,7 +31,6 @@ jobs:
 
       - name: Download DawnCraft 2.0.16 HF Server Pack
         run: |
-          # محاولة التحميل من السورس الأساسي
           wget -O DawnCraft_ServerPack.zip https://edge.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip || \
           wget -O DawnCraft_ServerPack.zip https://mediafilez.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip
           unzip -o DawnCraft_ServerPack.zip -d .
@@ -37,7 +38,7 @@ jobs:
 
       - name: Setup Playit.gg
         run: |
-          # تحميل ملف الـ binary مباشرة لتجنب مشاكل المستودعات (PPA)
+          # التحميل المباشر للـ binary (أضمن طريقة)
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -48,11 +49,11 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          # تشغيل playit في الخلفية باستخدام الـ secret الخاص بك
+          # تشغيل playit في الخلفية
           playit run --secret ${{ secrets.PLAYIT_SECRET }} &
           
           echo "Starting Minecraft Server..."
-          # تأكد أن اسم الملف هو run.sh أو اسم الـ jar الصحيح الناتج عن التثبيت
+          # تشغيل السيرفر
           if [ -f run.sh ]; then
             chmod +x run.sh
             ./run.sh
