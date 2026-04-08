@@ -1,4 +1,4 @@
-name: DawnCraft Server (Playit Fixed)
+name: DawnCraft Server (Final Fix)
 
 on:
   workflow_dispatch:
@@ -15,6 +15,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Optimize System (Swap Space)
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
 
       - name: Install dependencies
         run: |
@@ -35,33 +42,29 @@ jobs:
 
       - name: Setup Playit.gg (Official APT Method)
         run: |
-          # إضافة المستودع الرسمي لضمان أحدث نسخة (كما في الصورة الأخيرة)
           curl -SsL https://playit-cloud.github.io/ppa/key.gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/playit.gpg >/dev/null
           echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./ " | sudo tee /etc/apt/sources.list.d/playit-cloud.list
           sudo apt update
           sudo apt install playit -y
 
-      - name: Accept EULA and Set Cracked
+      - name: Accept EULA and Configuration
         run: |
           echo "eula=true" > eula.txt
-          if [ -f server.properties ]; then
-            sed -i 's/online-mode=true/online-mode=false/' server.properties
-          else
-            echo "online-mode=false" > server.properties
-          fi
+          # ضبط الأونلاين مود ليكون مكرك (Cracked) وضبط الفيو ديستنس لتحسين الأداء
+          echo "online-mode=false" > server.properties
+          echo "view-distance=6" >> server.properties
+          echo "max-tick-time=-1" >> server.properties
 
       - name: Run Server
         env:
           PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
           echo "--------------------------------------------------"
-          echo "Starting Playit.gg with APT version..."
-          echo "--------------------------------------------------"
-          
-          # تشغيل Playit باستخدام السيكريت كي
+          echo "Starting Playit.gg Agent..."
           playit --secret "$PLAYIT_KEY" run & 
           
-          sleep 45
+          sleep 30
           
-          echo "Starting Minecraft Server (DawnCraft)..."
-          java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
+          echo "Starting DawnCraft Server..."
+          # استخدام 6 جيجا لضمان الاستقرار ومنع الـ Out of Memory
+          java -Xmx6G -Xms6G -XX:+UseG1GC @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
