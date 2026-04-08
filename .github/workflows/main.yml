@@ -34,11 +34,12 @@ jobs:
         env:
           TS_AUTHKEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
         run: |
-          # تسجيل الدخول وتفعيل السيرفر باسم مميز
+          # تسجيل الدخول وتفعيل السيرفر
           sudo tailscale up --authkey "$TS_AUTHKEY" --hostname="dawncraft-server"
           
-          # تفعيل الـ Funnel لفتح البورت للعامة (بورت 25565)
-          sudo tailscale funnel 25565 &
+          # التعديل الجديد: تحويل الترافيك من بورت 443 العام إلى 25565 الخاص بماينكرافت
+          # ده بيخلي الرابط يشتغل كأنه موقع ويب ويوصلك للسيرفر فوراً
+          sudo tailscale funnel --proxy 25565 443 &
 
       - name: Download and Install Forge & DawnCraft
         run: |
@@ -59,10 +60,8 @@ jobs:
       - name: Run Server
         run: |
           echo "------------------------------------------------"
-          echo "LOOK AT YOUR TAILSCALE DASHBOARD FOR THE LINK"
-          echo "It will be something like: dawncraft-server.yourname.ts.net"
+          echo "Your Server Link: dawncraft-server.[YOUR-NAME].ts.net:443"
           echo "------------------------------------------------"
           
           echo "Starting Minecraft Server..."
-          # استخدام Headless Mode وتصحيح الذاكرة لضمان الاستقرار
           java -Xmx7G -Xms7G -Djava.awt.headless=true -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
