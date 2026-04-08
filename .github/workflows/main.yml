@@ -34,14 +34,9 @@ jobs:
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
-      - name: Fix Crash Issue
-        run: |
-          # حذف الملف المسبب للـ Crash في الـ Logs بتاعتك
-          find . -name "giant_foamshroom.json" -delete
-          echo "Fixed corrupted JSON files."
-
       - name: Setup Playit.gg
         run: |
+          # تحميل أحدث نسخة مستقرة مباشرة
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -52,8 +47,20 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          playit run --secret ${{ secrets.PLAYIT_SECRET }} &
+          # استخدام الأمر الصحيح للربط
+          playit setup --secret ${{ secrets.PLAYIT_SECRET }} & 
+          sleep 10
+          playit run &
           
           echo "Starting Minecraft Server..."
-          # استهلاك رام 6 جيجا عشان السيرفر ميفصلش من GitHub
-          java -Xmx6G -Xms4G -jar forge-1.18.2-40.2.17.jar nogui
+          # أمر تشغيل ذكي يدور على ملف الـ jar الصحيح ويشغله
+          JAR_FILE=$(ls forge-1.18.2-*.jar | head -n 1)
+          if [ -f run.sh ]; then
+            chmod +x run.sh
+            ./run.sh
+          elif [ -f "$JAR_FILE" ]; then
+            java -Xmx6G -Xms4G -jar "$JAR_FILE" nogui
+          else
+            echo "Searching for any server jar..."
+            java -Xmx6G -Xms4G -jar user_jvm_args.txt @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui || java -Xmx6G -Xms4G -jar *.jar nogui
+          fi
