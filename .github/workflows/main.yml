@@ -1,4 +1,4 @@
-name: DawnCraft Server (Final Fix V2)
+name: DawnCraft Server (Final Fix V3)
 
 on:
   workflow_dispatch:
@@ -40,6 +40,8 @@ jobs:
           wget -O DawnCraft_ServerPack.zip "https://mediafilez.forgecdn.net/files/7243/901/DawnCraft 2.0.16_hf Serverpack.zip"
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
+          # حذف المود المسبب للـ Crash
+          rm mods/hexerei-*.jar
 
       - name: Setup Playit.gg
         run: |
@@ -60,11 +62,9 @@ jobs:
           PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
           echo "Starting Playit.gg Agent..."
-          # تشغيل Playit مع تجاهل أخطاء السيكريت مؤقتاً لضمان عدم توقف الـ Workflow
           playit --secret "$PLAYIT_KEY" run & 
           
           sleep 30
           
           echo "Starting DawnCraft Server..."
-          # تم تصحيح كلمة SurvivorRatio وإزالة أي تعقيدات زائدة
           java -Xmx7G -Xms7G -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
