@@ -18,7 +18,9 @@ jobs:
 
       - name: Optimize System (Swap Space)
         run: |
-          sudo fallocate -l 4G /swapfile
+          # طريقة أضمن لعمل الـ Swap عشان نتجنب خطأ Text file busy
+          sudo swapoff -a
+          sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
@@ -40,7 +42,7 @@ jobs:
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
-      - name: Setup Playit.gg (Official APT Method)
+      - name: Setup Playit.gg
         run: |
           curl -SsL https://playit-cloud.github.io/ppa/key.gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/playit.gpg >/dev/null
           echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./ " | sudo tee /etc/apt/sources.list.d/playit-cloud.list
@@ -50,7 +52,6 @@ jobs:
       - name: Accept EULA and Configuration
         run: |
           echo "eula=true" > eula.txt
-          # ضبط الأونلاين مود ليكون مكرك (Cracked) وضبط الفيو ديستنس لتحسين الأداء
           echo "online-mode=false" > server.properties
           echo "view-distance=6" >> server.properties
           echo "max-tick-time=-1" >> server.properties
@@ -59,12 +60,11 @@ jobs:
         env:
           PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
-          echo "--------------------------------------------------"
           echo "Starting Playit.gg Agent..."
           playit --secret "$PLAYIT_KEY" run & 
           
           sleep 30
           
           echo "Starting DawnCraft Server..."
-          # استخدام 6 جيجا لضمان الاستقرار ومنع الـ Out of Memory
-          java -Xmx6G -Xms6G -XX:+UseG1GC @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
+          # رفعنا الذاكرة لـ 7G مع الـ Swap الجديد لضمان عدم التعليق
+          java -Xmx7G -Xms7G -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurviorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
