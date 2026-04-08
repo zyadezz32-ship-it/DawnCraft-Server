@@ -29,15 +29,16 @@ jobs:
 
       - name: Download DawnCraft Pack
         run: |
+          # تحميل وفك ضغط المودباك مع معالجة المسافات في الاسم
           wget -O DawnCraft_ServerPack.zip "https://mediafilez.forgecdn.net/files/7243/901/DawnCraft 2.0.16_hf Serverpack.zip"
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
       - name: Setup Playit.gg
         run: |
+          # تحميل أحدث نسخة من playit وتجهيزها
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
-          sudo mv playit /usr/local/bin/playit
 
       - name: Accept EULA
         run: echo "eula=true" > eula.txt
@@ -45,12 +46,12 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          # تشغيل playit في الخلفية
-          playit run --secret ${{ secrets.PLAYIT_SECRET }} & 
+          # استخدام الأمر المباشر لضمان الربط بالـ Secret
+          ./playit run --secret ${{ secrets.PLAYIT_SECRET }} & 
           
-          sleep 20
+          sleep 25
           
           echo "Starting Minecraft Server with 7GB RAM..."
-          # تم زيادة الرام هنا إلى 7 جيجا لضمان أفضل أداء
-          # تم استخدام مسار التشغيل الصحيح لملف الجافا الخاص بـ Forge 1.18.2
-          java -Xmx7G -Xms7G @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt "$@"
+          # دمج إعدادات الرام مع ملفات التشغيل الأصلية لـ Forge
+          # -Xmx7G بتدي السيرفر أقصى مساحة عشان DawnCraft مودباك عملاقة
+          java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt "$@"
