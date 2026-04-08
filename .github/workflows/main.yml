@@ -1,4 +1,4 @@
-name: DawnCraft Server (Playit ULTIMATE)
+name: DawnCraft Server (Final Fix)
 
 on:
   workflow_dispatch:
@@ -33,9 +33,9 @@ jobs:
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
-      - name: Setup Playit.gg (Modern Agent)
+      - name: Setup Playit.gg (Native Agent)
         run: |
-          # تحميل النسخة المباشرة عشان نتجنب مشاكل الـ Docker والـ PPA القديم
+          # تحميل النسخة المباشرة لضمان ظهور الإصدار للموقع
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -49,22 +49,16 @@ jobs:
             echo "online-mode=false" > server.properties
           fi
 
-      - name: Run Server and Connect
+      - name: Run Server
         env:
           PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
-          echo "--------------------------------------------------"
-          echo "Step 1: Starting Playit Agent..."
-          # تشغيل الـ Agent مع توجيه الـ Logs لملف عشان لو حصل مشكلة نعرفها
-          playit --secret "$PLAYIT_KEY" run > playit_log.txt 2>&1 &
+          echo "Connecting to Playit.gg..."
+          # تشغيل الـ Agent وإجباره على تحديث البيانات للموقع
+          playit --secret "$PLAYIT_KEY" run & 
           
-          echo "Step 2: Waiting 45 seconds for stable connection..."
-          sleep 45
+          echo "Waiting 40 seconds for stable connection..."
+          sleep 40
           
-          echo "Step 3: Checking Playit status..."
-          # التأكد إن الـ Agent شغال في الخلفية
-          pgrep playit > /dev/null && echo "Playit is running!" || echo "Playit failed to start!"
-          
-          echo "Step 4: Starting Minecraft (DawnCraft)..."
-          echo "--------------------------------------------------"
+          echo "Starting Minecraft Server (DawnCraft)..."
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
