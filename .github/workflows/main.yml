@@ -8,28 +8,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Clean and Install dependencies
+      - name: Install Dependencies
         run: |
-          # مسح أي مستودعات قديمة عاملة مشاكل
-          sudo rm -f /etc/apt/sources.list.d/playit.list
           sudo apt-get update
           sudo apt-get install -y wget curl unzip screen
 
-      - name: Download and Install Forge 40.2.17
+      - name: Download and Install Forge
         run: |
           wget -O forge-installer.jar https://maven.minecraftforge.net/net/minecraftforge/forge/1.18.2-40.2.17/forge-1.18.2-40.2.17-installer.jar
           java -jar forge-installer.jar --installServer
           rm forge-installer.jar
 
-      - name: Download DawnCraft 2.0.16 HF Server Pack
+      - name: Download DawnCraft Pack
         run: |
           wget -O DawnCraft_ServerPack.zip https://edge.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip || \
           wget -O DawnCraft_ServerPack.zip https://mediafilez.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip
@@ -38,7 +36,7 @@ jobs:
 
       - name: Setup Playit.gg
         run: |
-          # التحميل المباشر للـ binary (أضمن طريقة)
+          # لاحظ هنا مفيش PPA ولا apt خالص
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -49,11 +47,9 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          # تشغيل playit في الخلفية
           playit run --secret ${{ secrets.PLAYIT_SECRET }} &
           
           echo "Starting Minecraft Server..."
-          # تشغيل السيرفر
           if [ -f run.sh ]; then
             chmod +x run.sh
             ./run.sh
