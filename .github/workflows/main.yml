@@ -1,4 +1,4 @@
-name: DawnCraft Server
+name: DawnCraft Server (Playit)
 
 on:
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget curl unzip screen jq
+          sudo apt-get install -y wget curl unzip screen jq gnupg2
 
       - name: Download and Install Forge
         run: |
@@ -33,13 +33,12 @@ jobs:
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
-      - name: Setup ngrok
+      - name: Setup Playit.gg
         run: |
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null
-          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt update && sudo apt install ngrok
-          # التوكن بتاعك من الصورة
-          ngrok config add-authtoken 304KNZ5sEAuYMvZJC8etJUv5vM6_3nKWdfGTHQYzwGY1QH93B
+          curl -SsL https://playit-cloud.github.io/ppa/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/playit.gpg
+          echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./ " | sudo tee /etc/apt/sources.list.d/playit-cloud.list
+          sudo apt update
+          sudo apt install playit -y
 
       - name: Accept EULA and Set Cracked
         run: |
@@ -51,20 +50,18 @@ jobs:
           fi
 
       - name: Run Server
+        env:
+          PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
-          echo "Starting ngrok tunnel..."
-          # تشغيل النفق مع توجيه الـ logs لتجنب تداخل البيانات
-          ngrok tcp 25565 --log=stdout > ngrok_status.log & 
-          
-          echo "Waiting for ngrok to generate IP..."
-          sleep 30
-          
           echo "--------------------------------------------------"
-          echo "YOUR SERVER IP IS:"
-          # جلب الـ IP وطباعته بوضوح
-          curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url' | sed 's/tcp:\/\///'
+          echo "Starting Playit.gg with Secret Key..."
           echo "--------------------------------------------------"
+          
+          # تشغيل Playit باستخدام السيكريت كي اللي انت حفظته في الـ Secrets
+          playit --secret "$PLAYIT_KEY" & 
+          
+          sleep 20
           
           echo "Starting Minecraft Server (DawnCraft)..."
-          # استخدام الرامات القصوى المتاحة (7 جيجا)
+          # تشغيل السيرفر برامات 7 جيجا
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
