@@ -1,0 +1,51 @@
+name: DawnCraft Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl unzip screen
+
+      - name: Download and Install Forge 40.2.17
+        run: |
+          wget -O forge-installer.jar https://maven.minecraftforge.net/net/minecraftforge/forge/1.18.2-40.2.17/forge-1.18.2-40.2.17-installer.jar
+          java -jar forge-installer.jar --installServer
+          rm forge-installer.jar
+
+      - name: Download DawnCraft 2.0.16 HF Server Pack
+        run: |
+          wget -O DawnCraft_ServerPack.zip https://edge.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip || \
+          wget -O DawnCraft_ServerPack.zip https://mediafilez.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip
+          unzip -o DawnCraft_ServerPack.zip -d .
+          rm DawnCraft_ServerPack.zip
+
+      - name: Setup Playit.gg
+        run: |
+          curl -SsL https://playit-cloud.github.io/ppa/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/playit.gpg
+          echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data-production /" | sudo tee /etc/apt/sources.list.d/playit.list
+          sudo apt-get update
+          sudo apt-get install playit -y
+
+      - name: Run Server
+        run: |
+          echo "Starting Playit.gg..."
+          # Note: On first run, check the logs to link your playit account
+          playit setup --secret ${{ secrets.PLAYIT_SECRET }} &
+          
+          echo "Starting Minecraft Server..."
+          java -Xmx7G -Xms4G -jar forge-1.18.2-40.2.17.jar nogui
