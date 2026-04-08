@@ -36,7 +36,6 @@ jobs:
 
       - name: Setup Playit.gg
         run: |
-          # تحميل أحدث نسخة مستقرة مباشرة
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -47,20 +46,16 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          # استخدام الأمر الصحيح للربط
-          playit setup --secret ${{ secrets.PLAYIT_SECRET }} & 
-          sleep 10
-          playit run &
+          # تشغيل playit بالأمر المباشر والمستقر
+          playit run --secret ${{ secrets.PLAYIT_SECRET }} & 
+          
+          sleep 15
           
           echo "Starting Minecraft Server..."
-          # أمر تشغيل ذكي يدور على ملف الـ jar الصحيح ويشغله
-          JAR_FILE=$(ls forge-1.18.2-*.jar | head -n 1)
+          # تشغيل السيرفر باستخدام ملف unix_args لضمان تحميل كل المكتبات صح
           if [ -f run.sh ]; then
             chmod +x run.sh
             ./run.sh
-          elif [ -f "$JAR_FILE" ]; then
-            java -Xmx6G -Xms4G -jar "$JAR_FILE" nogui
           else
-            echo "Searching for any server jar..."
-            java -Xmx6G -Xms4G -jar user_jvm_args.txt @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui || java -Xmx6G -Xms4G -jar *.jar nogui
+            java -Xmx6G -Xms4G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
           fi
