@@ -1,4 +1,4 @@
-name: DawnCraft Server (Final Fix V4)
+name: DawnCraft Server (Easy Link)
 
 on:
   workflow_dispatch:
@@ -16,31 +16,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Optimize System (Swap Space)
-        run: |
-          sudo swapoff -a
-          sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y wget curl unzip screen jq gnupg2
-
-      - name: Download and Install Forge
-        run: |
-          wget -O forge-installer.jar https://maven.minecraftforge.net/net/minecraftforge/forge/1.18.2-40.2.17/forge-1.18.2-40.2.17-installer.jar
-          java -jar forge-installer.jar --installServer
-          rm forge-installer.jar
-
-      - name: Download DawnCraft Pack
-        run: |
-          wget -O DawnCraft_ServerPack.zip "https://mediafilez.forgecdn.net/files/7243/901/DawnCraft 2.0.16_hf Serverpack.zip"
-          unzip -o DawnCraft_ServerPack.zip -d .
-          rm DawnCraft_ServerPack.zip
-          # رجعنا المودات كاملة عشان الـ Datapacks ما تضربش
 
       - name: Setup Playit.gg
         run: |
@@ -48,6 +27,26 @@ jobs:
           echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./ " | sudo tee /etc/apt/sources.list.d/playit-cloud.list
           sudo apt update
           sudo apt install playit -y
+
+      - name: Get Playit Claim Code
+        run: |
+          echo "------------------------------------------------"
+          echo "!!! LOOK HERE FOR YOUR CLAIM CODE !!!"
+          echo "------------------------------------------------"
+          # This will start playit, show the claim code, and then we'll stop it to continue setup
+          timeout 20s playit setup || true
+          echo "------------------------------------------------"
+          echo "Copy the code above and paste it into playit.gg"
+          echo "------------------------------------------------"
+
+      - name: Download and Install Forge & DawnCraft
+        run: |
+          wget -O forge-installer.jar https://maven.minecraftforge.net/net/minecraftforge/forge/1.18.2-40.2.17/forge-1.18.2-40.2.17-installer.jar
+          java -jar forge-installer.jar --installServer
+          rm forge-installer.jar
+          wget -O DawnCraft_ServerPack.zip "https://mediafilez.forgecdn.net/files/7243/901/DawnCraft 2.0.16_hf Serverpack.zip"
+          unzip -o DawnCraft_ServerPack.zip -d .
+          rm DawnCraft_ServerPack.zip
 
       - name: Accept EULA and Configuration
         run: |
@@ -57,14 +56,9 @@ jobs:
           echo "max-tick-time=-1" >> server.properties
 
       - name: Run Server
-        env:
-          PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
-          echo "Starting Playit.gg Agent..."
-          playit --secret "$PLAYIT_KEY" run & 
-          
-          sleep 30
-          
-          echo "Starting DawnCraft Server with Headless Mode..."
-          # ضفنا -Djava.awt.headless=true عشان مود Hexerei ما يعملش كراش
-          java -Xmx7G -Xms7G -Djava.awt.headless=true -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
+          echo "Starting Playit.gg in background..."
+          playit run & 
+          sleep 10
+          echo "Starting Minecraft Server..."
+          java -Xmx7G -Xms7G -Djava.awt.headless=true -XX:+UseG1GC @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
