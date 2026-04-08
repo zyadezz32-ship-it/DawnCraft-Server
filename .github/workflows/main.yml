@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -29,6 +29,7 @@ jobs:
 
       - name: Download DawnCraft 2.0.16 HF Server Pack
         run: |
+          # محاولة التحميل من السورس الأساسي
           wget -O DawnCraft_ServerPack.zip https://edge.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip || \
           wget -O DawnCraft_ServerPack.zip https://mediafilez.forgecdn.net/files/7243/901/DawnCraft%202.0.16_hf%20Serverpack.zip
           unzip -o DawnCraft_ServerPack.zip -d .
@@ -36,14 +37,25 @@ jobs:
 
       - name: Setup Playit.gg
         run: |
-          wget -O playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
+          # تحميل ملف الـ binary مباشرة لتجنب مشاكل المستودعات (PPA)
+          curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
+          sudo mv playit /usr/local/bin/playit
+
+      - name: Accept EULA
+        run: echo "eula=true" > eula.txt
 
       - name: Run Server
         run: |
-          echo "eula=true" > eula.txt
           echo "Starting Playit.gg..."
-          ./playit setup --secret ${{ secrets.PLAYIT_SECRET }} &
+          # تشغيل playit في الخلفية باستخدام الـ secret الخاص بك
+          playit run --secret ${{ secrets.PLAYIT_SECRET }} &
           
           echo "Starting Minecraft Server..."
-          java -Xmx7G -Xms4G -jar forge-1.18.2-40.2.17.jar nogui
+          # تأكد أن اسم الملف هو run.sh أو اسم الـ jar الصحيح الناتج عن التثبيت
+          if [ -f run.sh ]; then
+            chmod +x run.sh
+            ./run.sh
+          else
+            java -Xmx7G -Xms4G -jar forge-1.18.2-40.2.17.jar nogui
+          fi
