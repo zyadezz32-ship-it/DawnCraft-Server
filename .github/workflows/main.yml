@@ -46,11 +46,12 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          # تم حذف كلمة run لأنها تسبب خطأ في الإصدار الحالي
+          # تم حذف كلمة run لأنها كانت تسبب خطأ unrecognized subcommand
+          # تم ربط المفتاح السري PLAYIT_SECRET بشكل صحيح ليتم قراءته من إعدادات GitHub
           ./playit --secret ${{ secrets.PLAYIT_SECRET }} & 
           
           sleep 25
           
           echo "Starting Minecraft Server with 7GB RAM..."
-          # تشغيل السيرفر باستخدام ملف unix_args لضمان تحميل المودات بشكل صحيح
+          # تشغيل السيرفر باستخدام ملف unix_args لضمان تحميل المودات وعدم ظهور خطأ jarfile
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt
