@@ -16,7 +16,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y wget curl unzip screen
@@ -34,9 +34,14 @@ jobs:
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
+      - name: Fix Crash Issue
+        run: |
+          # حذف الملف المسبب للـ Crash في الـ Logs بتاعتك
+          find . -name "giant_foamshroom.json" -delete
+          echo "Fixed corrupted JSON files."
+
       - name: Setup Playit.gg
         run: |
-          # لاحظ هنا مفيش PPA ولا apt خالص
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -50,9 +55,5 @@ jobs:
           playit run --secret ${{ secrets.PLAYIT_SECRET }} &
           
           echo "Starting Minecraft Server..."
-          if [ -f run.sh ]; then
-            chmod +x run.sh
-            ./run.sh
-          else
-            java -Xmx7G -Xms4G -jar forge-1.18.2-40.2.17.jar nogui
-          fi
+          # استهلاك رام 6 جيجا عشان السيرفر ميفصلش من GitHub
+          java -Xmx6G -Xms4G -jar forge-1.18.2-40.2.17.jar nogui
