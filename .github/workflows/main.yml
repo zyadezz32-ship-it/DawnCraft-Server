@@ -1,4 +1,4 @@
-name: DawnCraft Server (Playit)
+name: DawnCraft Server (Playit Final)
 
 on:
   workflow_dispatch:
@@ -33,12 +33,12 @@ jobs:
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
-      - name: Setup Playit.gg
+      - name: Setup Playit.gg (Latest Version)
         run: |
-          curl -SsL https://playit-cloud.github.io/ppa/key.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/playit.gpg
-          echo "deb [signed-by=/etc/apt/trusted.gpg.d/playit.gpg] https://playit-cloud.github.io/ppa/data ./ " | sudo tee /etc/apt/sources.list.d/playit-cloud.list
-          sudo apt update
-          sudo apt install playit -y
+          # تحميل النسخة الأحدث مباشرة لحل مشكلة Version Unknown
+          curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
+          chmod +x playit
+          sudo mv playit /usr/local/bin/playit
 
       - name: Accept EULA and Set Cracked
         run: |
@@ -54,14 +54,11 @@ jobs:
           PLAYIT_KEY: ${{ secrets.PLAYIT_SECRET }}
         run: |
           echo "--------------------------------------------------"
-          echo "Starting Playit.gg with Secret Key..."
-          echo "--------------------------------------------------"
-          
-          # تشغيل Playit باستخدام السيكريت كي اللي انت حفظته في الـ Secrets
-          playit --secret "$PLAYIT_KEY" & 
+          echo "Starting Playit.gg..."
+          # استخدام أمر run لضمان استقرار الاتصال
+          playit --secret "$PLAYIT_KEY" run & 
           
           sleep 20
           
           echo "Starting Minecraft Server (DawnCraft)..."
-          # تشغيل السيرفر برامات 7 جيجا
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
