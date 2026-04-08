@@ -1,4 +1,4 @@
-name: DawnCraft Server (Playit Final)
+name: DawnCraft Server (Playit Final Fixed)
 
 on:
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
 
       - name: Setup Playit.gg (Latest Version)
         run: |
-          # تحميل النسخة الأحدث مباشرة لحل مشكلة Version Unknown
+          # تحميل أحدث نسخة مستقرة مباشرة لحل مشكلة Version Unknown
           curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
           chmod +x playit
           sudo mv playit /usr/local/bin/playit
@@ -55,10 +55,12 @@ jobs:
         run: |
           echo "--------------------------------------------------"
           echo "Starting Playit.gg..."
-          # استخدام أمر run لضمان استقرار الاتصال
+          echo "--------------------------------------------------"
+          
+          # تشغيل النسخة الجديدة باستخدام أمر run
           playit --secret "$PLAYIT_KEY" run & 
           
-          sleep 20
+          sleep 30
           
           echo "Starting Minecraft Server (DawnCraft)..."
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt nogui
