@@ -37,9 +37,9 @@ jobs:
           # تسجيل الدخول وتفعيل السيرفر
           sudo tailscale up --authkey "$TS_AUTHKEY" --hostname="dawncraft-server"
           
-          # التعديل الجديد: تحويل الترافيك من بورت 443 العام إلى 25565 الخاص بماينكرافت
-          # ده بيخلي الرابط يشتغل كأنه موقع ويب ويوصلك للسيرفر فوراً
-          sudo tailscale funnel --proxy 25565 443 &
+          # التعديل الصحيح: استخدام --tcp بدلاً من --proxy المتوقف
+          # بنقول له استقبل الناس على بورت 443 وحولهم جوه لبورت اللعبة 25565
+          sudo tailscale funnel --tcp 443 25565 &
 
       - name: Download and Install Forge & DawnCraft
         run: |
