@@ -29,29 +29,39 @@ jobs:
 
       - name: Download DawnCraft Pack
         run: |
-          # تحميل وفك ضغط المودباك مع معالجة المسافات في الاسم
           wget -O DawnCraft_ServerPack.zip "https://mediafilez.forgecdn.net/files/7243/901/DawnCraft 2.0.16_hf Serverpack.zip"
           unzip -o DawnCraft_ServerPack.zip -d .
           rm DawnCraft_ServerPack.zip
 
-      - name: Setup Playit.gg
+      - name: Setup ngrok
         run: |
-          # تحميل أحدث نسخة من playit وتجهيزها
-          curl -Lo playit https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64
-          chmod +x playit
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok
+          # استخدام التوكن بتاعك مباشرة هنا
+          ngrok config add-authtoken 304KNZ5sEAuYMvZJC8etJUv5vM6_3nKWdfGTHQYzwGY1QH93B
 
-      - name: Accept EULA
-        run: echo "eula=true" > eula.txt
+      - name: Accept EULA and Set Cracked
+        run: |
+          echo "eula=true" > eula.txt
+          # تحويل السيرفر لـ Cracked عشان يشتغل مع كل اللانشرات
+          if [ -f server.properties ]; then
+            sed -i 's/online-mode=true/online-mode=false/' server.properties
+          else
+            echo "online-mode=false" > server.properties
+          fi
 
       - name: Run Server
         run: |
-          echo "Starting Playit.gg..."
-          # تم حذف كلمة run لأنها كانت تسبب خطأ unrecognized subcommand
-          # تم ربط المفتاح السري PLAYIT_SECRET بشكل صحيح ليتم قراءته من إعدادات GitHub
-          ./playit --secret ${{ secrets.PLAYIT_SECRET }} & 
+          echo "Starting ngrok tunnel..."
+          # فتح النفق على بورت ماين كرافت 25565
+          ngrok tcp 25565 & 
           
-          sleep 25
+          sleep 10
           
-          echo "Starting Minecraft Server with 7GB RAM..."
-          # تشغيل السيرفر باستخدام ملف unix_args لضمان تحميل المودات وعدم ظهور خطأ jarfile
+          echo "--------------------------------------------------"
+          echo "WAIT! Get your IP from ngrok dashboard (Endpoints)"
+          echo "--------------------------------------------------"
+          
+          echo "Starting Minecraft Server..."
           java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt
