@@ -46,12 +46,11 @@ jobs:
       - name: Run Server
         run: |
           echo "Starting Playit.gg..."
-          # استخدام الأمر المباشر لضمان الربط بالـ Secret
-          ./playit run --secret ${{ secrets.PLAYIT_SECRET }} & 
+          # تم حذف كلمة run لأنها تسبب خطأ في الإصدار الحالي
+          ./playit --secret ${{ secrets.PLAYIT_SECRET }} & 
           
           sleep 25
           
           echo "Starting Minecraft Server with 7GB RAM..."
-          # دمج إعدادات الرام مع ملفات التشغيل الأصلية لـ Forge
-          # -Xmx7G بتدي السيرفر أقصى مساحة عشان DawnCraft مودباك عملاقة
-          java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt "$@"
+          # تشغيل السيرفر باستخدام ملف unix_args لضمان تحميل المودات بشكل صحيح
+          java -Xmx7G -Xms7G @libraries/net/minecraftforge/forge/1.18.2-40.2.17/unix_args.txt
